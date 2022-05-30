@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">亚丝娜二号</string>
+  <string name="title_autologin">自动登录</string>
+  <string name="title_codegot">从亚丝娜那里获取到的代码</string>
+  <string name="title_dashboard">超星平台</string>
+  <string name="title_gensign">普通签到/手势签到/位置签到(西十二)</string>
+  <string name="title_home">微助教</string>
+  <string name="title_login">登录</string>
+  <string name="title_loginstatus">登录状态</string>
+  <string name="title_notifications">Notifications</string>
+  <string name="title_notlogin">没有登录</string>
+  <string name="title_password">密码</string>
+  <string name="title_paste">粘贴</string>
+  <string name="title_qrsign">二维码签到</string>
+  <string name="title_rempswd">记住密码</string>
+  <string name="title_sign">签到</string>
+  <string name="title_username">用户名</string>
+  <string name="title_onekeysign">一键签到</string>
+  <string name="title_signstatus">签到状态</string>
+  <string name="title_checksign">检测签到</string>
+  <string name="title_openid">输入或粘贴带有openid的文本</string>
+</resources>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:theme="@style/CxTheme"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.google.android.material.textfield.TextInputEditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:hint="@string/title_username"
+        android:id="@+id/cxTxtUserName" />
+    <com.google.android.material.textfield.TextInputEditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/title_password"
+        android:inputType="textPassword"
+        android:id="@+id/cxTxtPassword" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linearLayout1">
+        <CheckBox
+            android:text="@string/title_rempswd"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/cxChkRememberPswd" />
+        <CheckBox
+            android:text="@string/title_autologin"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/cxChkAutoLogin" />
+    </LinearLayout>
+    <Button
+        android:text="@string/title_login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/cxBtnLogin" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linearLayout2">
+        <TextView
+            android:text="@string/title_loginstatus"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/cxTxtStatusHint" />
+        <TextView
+            android:text="@string/title_notlogin"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textColor="@android:color/holo_red_dark"
+            android:id="@+id/cxTxtStatus" />
+    </LinearLayout>
+    <Button
+        android:text="@string/title_gensign"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/cxBtnSignLoc" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linearLayout3">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:hint="@string/title_codegot"
+            android:inputType="text"
+            android:layout_weight="8"
+            android:id="@+id/cxTxtCode" />
+        <Button
+            android:text="@string/title_paste"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/cxBtnPaste" />
+    </LinearLayout>
+    
+
+    <Button
+        android:text="@string/title_qrsign"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/cxBtnsign" />
+    <Button
+        android:id="@+id/cxBtnScan"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:text="Xcan"/>
+    <ScrollView
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/scrollView1" >
+        <TextView
+                android:text=""
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/cxTxtSignStat" />
+    </ScrollView>
+
+
+</LinearLayout>

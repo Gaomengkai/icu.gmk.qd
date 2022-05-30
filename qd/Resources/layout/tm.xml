@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:theme="@style/TmTheme"
+    android:id="@+id/fragmentTM">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linearLayout1">
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="@string/title_openid"
+            android:layout_weight="8"
+            android:inputType="text"
+            android:id="@+id/tmTxtOpenid" />
+        <Button
+            android:text="@string/title_paste"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/tmBtnPaste"
+            
+            />
+
+    </LinearLayout>
+    <Button
+        android:text="@string/title_login"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tmBtnLogin" />
+    <LinearLayout
+        android:orientation="horizontal"
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/linearLayout2">
+        <TextView
+            android:text="@string/title_loginstatus"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:id="@+id/textView1" />
+        <TextView
+            android:text="@string/title_notlogin"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:textColor="@android:color/holo_red_dark"
+            android:id="@+id/tmTxtLoginStatus" />
+    </LinearLayout>
+    <Button
+        android:text="@string/title_checksign"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tmBtnCheckSigns"
+        android:enabled="false" />
+    <ListView
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tmListSigns" />
+    <Button
+        android:text="@string/title_onekeysign"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tmBtnSign"
+        android:enabled="true" />
+    <TextView
+        android:text="@string/title_signstatus"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/tmTxtSignStatus" />
+
+
+</LinearLayout>
