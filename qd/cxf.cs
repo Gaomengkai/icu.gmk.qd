@@ -28,6 +28,8 @@ namespace qd
         private EditText editOpenCode;
         private TextView signStat;
 
+        private string selectedBuilding = "西十二";
+
         public override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
@@ -35,7 +37,9 @@ namespace qd
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
+            
             return inflater.Inflate(Resource.Layout.cx, container, false);
+
         }
 
         public override async void OnActivityCreated(Bundle savedInstanceState)
@@ -63,6 +67,14 @@ namespace qd
             cxGenSign.Click += CxGenSign_Click;
             Button cxXcan = View.FindViewById<Button>(Resource.Id.cxBtnScan);
             cxXcan.Click += CxXcan_Click;
+
+            Spinner spinner = View.FindViewById<Spinner>(Resource.Id.spBuilding);
+            var adapter = ArrayAdapter.CreateFromResource(
+            this.Context, Resource.Array.building_array, Android.Resource.Layout.SimpleSpinnerItem);
+            adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
+            spinner.Adapter = adapter;
+            spinner.ItemSelected += (sender, e) => { selectedBuilding=spinner.SelectedItem.ToString(); };
+
             // 创建用户文件
             await UserFile.ExistOrCreate();
             // 如果用户已经登录 则跳过登录这一步骤
@@ -138,8 +150,11 @@ namespace qd
                             // 位置签到支持
                             else if (signActive.nameOne.Contains("位置"))
                             {
+                                var pos = Signer.LocationDict[selectedBuilding];
                                 signRes = await
-                                    Signer.Sign(stu.loginInfo, signActive.id.ToString(), stu.name, 0, 0, null);
+                                    Signer.SignLoc(stu.loginInfo, signActive.id.ToString(), stu.name, pos);
+                                //signRes = await
+                                //    Signer.Sign(stu.loginInfo, signActive.id.ToString(), stu.name, 0, 0, null);
                             }
                             else
                             {

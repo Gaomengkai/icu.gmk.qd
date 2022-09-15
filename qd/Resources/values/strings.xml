@@ -20,4 +20,12 @@
   <string name="title_signstatus">签到状态</string>
   <string name="title_checksign">检测签到</string>
   <string name="title_openid">输入或粘贴带有openid的文本</string>
+	<string-array name="building_array">
+		<item>西十二</item>
+		<item>东九A</item>
+		<item>东九B</item>
+		<item>东九C</item>
+		<item>东九D</item>
+		<item>南一</item>
+	</string-array>
 </resources>
