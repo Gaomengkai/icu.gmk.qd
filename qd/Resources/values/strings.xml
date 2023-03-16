@@ -4,7 +4,7 @@
   <string name="title_autologin">自动登录</string>
   <string name="title_codegot">从亚丝娜那里获取到的代码</string>
   <string name="title_dashboard">超星平台</string>
-  <string name="title_gensign">普通签到/手势签到/位置签到(西十二)</string>
+  <string name="title_gensign">非二维码签到</string>
   <string name="title_home">微助教</string>
   <string name="title_login">登录</string>
   <string name="title_loginstatus">登录状态</string>
@@ -21,7 +21,10 @@
   <string name="title_checksign">检测签到</string>
   <string name="title_openid">输入或粘贴带有openid的文本</string>
 	<string-array name="building_array">
-		<item>西十二</item>
+		<item>西十二SE</item>
+		<item>西十二SW</item>
+		<item>西十二NE</item>
+		<item>西十二NW</item>
 		<item>东九A</item>
 		<item>东九B</item>
 		<item>东九C</item>

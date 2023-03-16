@@ -1,17 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Text.RegularExpressions;
+using System.IO;
 using System.Net.Http;
 using System.Runtime.Serialization;
-using System.IO;
-using System.Text;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
-using System.Xml.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace ChaoXing
 {
+    public class GlobalVariables
+    {
+        public static string g_cookie { get; set; }
+    }
     public class Utils
     {
         /// <summary>
@@ -63,8 +66,26 @@ namespace ChaoXing
             }
             return ret.ToString();
         }
+
+        public static Signer.PositionWithName RandomizePosition(Signer.PositionWithName original, float precision = 0.000080f)
+        {
+            Random r = new Random();
+            Console.WriteLine($"{original.lat},{original.lon}");
+
+            float num1 = precision * r.Next(1000) / 1000;
+            float flag1 = r.Next(2) * 2 - 1;
+
+            float num2 = precision * r.Next(1000) / 1000;
+            float flag2 = r.Next(2) * 2 - 1;
+
+            original.lat += flag1 * num1;
+            original.lon += flag2 * num2;
+            Console.WriteLine($"{original.lat},{original.lon}");
+
+            return original;
+        }
     }
-    class CXURL
+    public class CXURL
     {
         public const string LOGIN_PAGE = "https://passport2.chaoxing.com/mlogin?fid=&newversion=true&refer=http%3A%2F%2Fi.chaoxing.com";
         public const string LOGIN = "https://passport2.chaoxing.com/fanyalogin";
@@ -76,8 +97,9 @@ namespace ChaoXing
         public const string PANLIST = "https://pan-yz.chaoxing.com/opt/listres";
         public const string PRESIGN = "https://mobilelearn.chaoxing.com/newsign/preSign";
         public const string UA = @"Dalvik/2.1.0 (Linux; U; Android 10; MI 8 MIUI/V12.0.3.0.QEACNXM) com.chaoxing.mobile/ChaoXingStudy_3_4.7.4_android_phone_593_53";
+        public const string PC_UA = @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
     }
-    class Student
+    public class Student
     {
         public string name { get; set; }
         public override string ToString()
@@ -137,6 +159,8 @@ namespace ChaoXing
         /// <returns></returns>
         string CookieHandler(string coo, int index)
         {
+            // TODO: 重写Cookie Handler
+            // 以适应更改的Cookie结构
             string ret = null;
             switch (index)
             {
@@ -171,7 +195,7 @@ namespace ChaoXing
         /// <param name="username">用户名</param>
         /// <param name="password">密码</param>
         /// <returns></returns>
-        async public Task Login(string u, string p)
+        public async Task Login(string u, string p)
         {
             var client = new HttpClient();
             var req = new HttpRequestMessage(HttpMethod.Get, CXURL.LOGIN_PAGE);
@@ -182,7 +206,7 @@ namespace ChaoXing
             var body = new Dictionary<string, string>
                 {
                     { "uname", u },
-                    { "password", Utils.DESEncrypt(p,Utils.sKey).ToLower() },
+                    { "password", Utils.DESEncrypt(p).ToLower() },
                     { "fid", "-1" },
                     { "t", "true" },
                     { "refer", "http://i.chaoxing.com" },
@@ -192,19 +216,24 @@ namespace ChaoXing
             var res = await client.SendAsync(reqLogin);
             var cookie = res.Headers.GetValues("set-cookie");
             int y = 0;
+            var original_cookie = "";
             foreach (var coo in cookie)
             {
+                original_cookie += coo[..coo.IndexOf(";")];
+                original_cookie += "; ";
                 CookieHandler(coo, y);
                 y += 1;
                 if (y == 9) break;
             }
             logined = true;
+            Console.WriteLine(original_cookie);
+            GlobalVariables.g_cookie = original_cookie;
         }
         /// <summary>
         /// When you use this method, you must login first
         /// </summary>
         /// <returns></returns>
-        async public Task<string> GetAccountName()
+        public async Task<string> GetAccountName()
         {
             if (!logined) return null;
             return await GetAccountName(loginInfo.uf, loginInfo._d, loginInfo._uid, loginInfo.vc3);
@@ -214,7 +243,7 @@ namespace ChaoXing
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        async static public Task<string> GetAccountName(LoginParams login)
+        public static async Task<string> GetAccountName(LoginParams login)
         {
             return await GetAccountName(login.uf, login._d, login._uid, login.vc3);
         }
@@ -225,37 +254,49 @@ namespace ChaoXing
             req.Headers.Add("Cookie", $"uf={uf}; _d={_d}; UID={_uid}; vc3={vc3};");
             var res = await client.SendAsync(req);
             var resS = await res.Content.ReadAsStringAsync();
-            var match = Regex.Match(resS, @"messageName"">([^<]+)");
+            var match = Regex.Match(resS, @"messageName([^>]+)");
             if (!match.Success) return null;
-            var name = match.Value[13..];
+            var name = match.Groups[1].Value[9..^1];
             return name;
         }
 
     }
-    class Signer
+    public class Signer
     {
         [Obsolete("This int enum is deprecated, please use Signer.SignType instead.")]
-        public readonly static int TYPE_SIGN_CLOSE = 2;
+        public static readonly int TYPE_SIGN_CLOSE = 2;
         [Obsolete("This int enum is deprecated, please use Signer.SignType instead.")]
-        public readonly static int TYPE_SIGN_OPEN = 1;
-        public enum SignType : int
+        public static readonly int TYPE_SIGN_OPEN = 1;
+        public enum SignOpenType : int
         {
             CLOSE = 2,
             OPEN = 1
         }
         public struct PositionWithName
         {
-            public double lat, lon;
+            public double lat, lon; // lat是纬度，lon是经度
             public string showName, upName;
         }
         public static readonly Dictionary<string, PositionWithName> LocationDict = new Dictionary<string, PositionWithName>{
-            {"南一",new PositionWithName{lat=114.420163,lon=30.515399,showName="南一",upName="中国湖北省武汉市洪山区关山街道华中路华中科技大学" }},
-            {"西十二",new PositionWithName{lat=114.414461,lon=30.514471,showName="西十二",upName="中国湖北省武汉市洪山区关山街道西五路华中科技大学" }},
-            {"东九A",new PositionWithName{lat=114.433650,lon=30.519738,showName="东九A",upName="" }},
-            {"东九B",new PositionWithName{lat=114.433502,lon=30.519349,showName="东九B",upName="" }},
-            {"东九C",new PositionWithName{lat=114.433448,lon=30.518987,showName="东九C",upName="" }},
-            {"东九D",new PositionWithName{lat=114.433350,lon=30.518544,showName="东九D",upName="" }},
+            {"南一", new PositionWithName{lon=114.420163,lat=30.515399,showName="南一",upName="中国湖北省武汉市洪山区关山街道华中路华中科技大学" }},
+
+            {"西十二SE",new PositionWithName{lon=114.414461,lat=30.514471,showName="西十二SE",upName="中国湖北省武汉市洪山区关山街道西五路华中科技大学" }},
+            {"西十二SW",new PositionWithName{lon=114.413239,lat=30.514366,showName="西十二SW",upName="中国湖北省武汉市洪山区关山街道西五路华中科技大学" }},
+            {"西十二NE",new PositionWithName{lon=114.414299,lat=30.514871,showName="西十二NE",upName="中国湖北省武汉市洪山区关山街道西五路华中科技大学" }},
+            {"西十二NW",new PositionWithName{lon=114.413123,lat=30.514720,showName="西十二NW",upName="中国湖北省武汉市洪山区关山街道西五路华中科技大学" }},
+
+            {"东九A",new PositionWithName{lon=114.433650,lat=30.519738,showName="东九A",upName="中国湖北省武汉市洪山区关山街道喻家湖路辅路华中科技大学(东校区)" }},
+            {"东九B",new PositionWithName{lon=114.433502,lat=30.519349,showName="东九B",upName="中国湖北省武汉市洪山区关山街道喻家湖路辅路华中科技大学(东校区)" }},
+            {"东九C",new PositionWithName{lon=114.433448,lat=30.518987,showName="东九C",upName="中国湖北省武汉市洪山区关山街道喻家湖路辅路华中科技大学(东校区)" }},
+            {"东九D",new PositionWithName{lon=114.433350,lat=30.518544,showName="东九D",upName="中国湖北省武汉市洪山区关山街道喻家湖路辅路华中科技大学(东校区)" }},
         };
+        public enum SignActiveType : int
+        {
+            COMMON,   //普通签到
+            QRSIGN,   //二维码签到
+            LOCSIGN,  //位置签到
+            UNKNOWN
+        }
         /// <summary>
         /// 二维码签到的有效信息
         /// </summary>
@@ -269,24 +310,41 @@ namespace ChaoXing
             {
                 return $"<class ChaoXing.Signer.SignCode> aid={aid} enc={enc}";
             }
+            public static SignCode Parse(string s)
+            {
+                // Origin string: https://mobilelearn.chaoxing.com/widget/sign/e?id=5000040360449&c=340848&enc=9B7581E2E4C6544D299F457084BDA701&DB_STRATEGY=PRIMARY_KEY&STRATEGY_PARA=id
+                // match id,c,enc
+                // at the same time let source=""
+                var match = Regex.Match(s, @"id=(\d+)&c=(\d+)&enc=([0-9A-F]+)");
+                if (!match.Success) throw new Exception("Invalid sign code");
+                // aid = id, source = "", Code = c, enc = enc
+                SignCode code = new SignCode()
+                {
+                    aid = match.Groups[1].Value,
+                    source = "",
+                    Code = match.Groups[2].Value,
+                    enc = match.Groups[3].Value
+                };
+                return code;
+            }
         }
         /// <summary>
         /// 对于每个用户复制的二维码签到码进行一个规整化
         /// </summary>
-        /// <param name="sign"></param>
+        /// <param name="sign">签到二维码字符串</param>
         /// <returns></returns>
         public static SignCode SignIdSizer(string sign)
         {
             try
             {
-                sign = sign[7..];
+                sign = sign.Split("?")[1];
                 var codes = sign.Split("&");
                 var signcode = new SignCode
                 {
-                    aid = codes[0][4..],
-                    source = codes[1][7..],
-                    Code = codes[2][5..],
-                    enc = codes[3][4..]
+                    aid = codes[0][3..],
+                    Code = codes[1][2..],
+                    enc = codes[2][4..],
+                    source = ""
                 };
                 return signcode;
             }
@@ -323,17 +381,49 @@ namespace ChaoXing
         {
             [DataMember]
             public string nameOne { get; set; }//活动名字
+
             [DataMember]
             public long id { get; set; }//activeId
+
             [DataMember]
             public int status { get; set; }//
+
             [DataMember(Name = "nameFour")]
             public string nameFour { get; set; }
+
             [DataMember]
             public int type { get; set; }
+
+            [DataMember(Name = "otherId")]
+            public int signType { get; set; }
+
             public override string ToString()
             {
                 return $"<class ChaoXing.Signer.SignActive> aid={id} nameFour={nameFour} nameOne={nameOne} status={status}";
+            }
+            /// <summary>
+            /// 用来获取签到的形式。 2023/3/14更改了判别格式
+            /// 2：二维码
+            /// 4：位置
+            /// 5：签到码
+            /// </summary>
+            /// <returns></returns>
+            public SignActiveType GetSignActiveType()
+            {
+                //if (nameOne.Contains("二维码"))
+                if (2 == signType)
+                {
+                    return SignActiveType.QRSIGN;
+                }
+                //else if (nameOne.Contains("位置"))
+                else if (4 == signType)
+                {
+                    return SignActiveType.LOCSIGN;
+                }
+                else
+                {
+                    return SignActiveType.COMMON;
+                }
             }
         }
         /// <summary>
@@ -367,7 +457,7 @@ namespace ChaoXing
         /// <param name="courceId">课程id</param>
         /// <param name="clazzId">课堂id</param>
         /// <returns>签到列表</returns>
-        async public static Task<SignActive[]> GetSignActives(Student.LoginParams login, string courceId, string clazzId)
+        public static async Task<SignActive[]> GetSignActives(Student.LoginParams login, string courceId, string clazzId)
         {
             var client = new HttpClient();
             var content = new FormUrlEncodedContent(new Dictionary<string, string>{
@@ -388,7 +478,7 @@ namespace ChaoXing
             var activeList = new List<SignActive>();
             foreach (var a in rootobject.data.activeList)
             {
-                if ((int)SignType.OPEN == a.status) activeList.Add(a);
+                if ((int)SignOpenType.OPEN == a.status) activeList.Add(a);
             }
             return activeList.ToArray();
         }
@@ -397,7 +487,7 @@ namespace ChaoXing
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        async public static Task<Course[]> GetCourses(Student.LoginParams login)
+        public static async Task<Course[]> GetCourses(Student.LoginParams login)
         {
             var client = new HttpClient();
             var req = new HttpRequestMessage(HttpMethod.Post, CXURL.COURSELIST);
@@ -433,7 +523,7 @@ namespace ChaoXing
         /// </summary>
         /// <param name="login"></param>
         /// <returns></returns>
-        async public static Task<Course[]> GetCoursesFull(Student.LoginParams login)
+        public static async Task<Course[]> GetCoursesFull(Student.LoginParams login)
         {
             var courses = await GetCourses(login);
             foreach (var c in courses)
@@ -453,26 +543,11 @@ namespace ChaoXing
         /// <param name="lon">经度</param>
         /// <param name="address">地理位置的描述</param>
         /// <returns>(awaitable)<成功与否，信息></returns>
-        async public static Task<KeyValuePair<bool, string>> Sign(Student.LoginParams login, string aid, string name, double lat, double lon, string address)
+        [Obsolete("请使用SignLoc")]
+        public static async Task<KeyValuePair<bool, string>> Sign(Student.LoginParams login, string aid, string name, double lat, double lon, string address)
         {
 
-            if (login == null) throw new ArgumentNullException("login");
-            lat = lat == 0 ? 30.514471 : lat;
-            lon = lon == 0 ? 114.414461 : lon;
-            address = address ?? "中国湖北省武汉市洪山区关山街道西五路华中科技大学";
-            var content = new FormUrlEncodedContent(new Dictionary<string, string> {
-                {"address",address },
-                {"activeId",aid },
-                {"uid",login._uid },
-                {"clientip","" },
-                {"useragent","" },
-                {"latitude",$"{lat}"},
-                {"longitude",$"{lon}" },
-                {"fid",login.fid },
-                {"appType","15" },
-                {"name",name }
-            });
-            return await SignRoot(login, content, aid);
+            return await SignLoc(login, aid, name, new PositionWithName() { lat = lat, lon = lon, upName = address });
         }
 
         /// <summary>
@@ -483,9 +558,25 @@ namespace ChaoXing
         /// <param name="stuname"></param>
         /// <param name="pos"></param>
         /// <returns></returns>
-        async public static Task<KeyValuePair<bool, string>> SignLoc(Student.LoginParams login, string aid, string stuname, PositionWithName pos)
+        public static async Task<KeyValuePair<bool, string>> SignLoc(Student.LoginParams login, string aid, string stuname, PositionWithName pos)
         {
-            return await Sign(login, aid, stuname, pos.lat, pos.lon, pos.upName);
+            if (login == null) throw new ArgumentNullException("login");
+            // lat = lat == 0 ? 30.514471 : lat;
+            // lon = lon == 0 ? 114.414461 : lon;
+            // address = address ?? "中国湖北省武汉市洪山区关山街道西五路华中科技大学";
+            var content = new FormUrlEncodedContent(new Dictionary<string, string> {
+                {"address",pos.upName },
+                {"activeId",aid },
+                {"uid",login._uid },
+                {"clientip","" },
+                {"useragent","" },
+                {"latitude",$"{pos.lat:F6}"},
+                {"longitude",$"{pos.lon:F6}" },
+                {"fid",login.fid },
+                {"appType","15" },
+                {"name",stuname }
+            });
+            return await SignRoot(login, content, aid);
         }
         /// <summary>
         /// 普通签到或手势签到
@@ -494,7 +585,7 @@ namespace ChaoXing
         /// <param name="aid"></param>
         /// <param name="name">用户姓名</param>
         /// <returns></returns>
-        async public static Task<KeyValuePair<bool, string>> Sign(Student.LoginParams login, string aid, string name)
+        public static async Task<KeyValuePair<bool, string>> SignCommon(Student.LoginParams login, string aid, string name)
         {
 
             if (login == null) throw new ArgumentNullException("login");
@@ -518,7 +609,19 @@ namespace ChaoXing
         /// <param name="sign"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        async public static Task<KeyValuePair<bool, string>> Sign(Student.LoginParams login, Signer.SignCode sign, string name)
+        [Obsolete("二维码签到请使用SignQR")]
+        public static async Task<KeyValuePair<bool, string>> Sign(Student.LoginParams login, Signer.SignCode sign, string name)
+        {
+            return await SignQR(login, name, sign);
+        }
+        /// <summary>
+        /// QR签到
+        /// </summary>
+        /// <param name="login"></param>
+        /// <param name="name"></param>
+        /// <param name="sign"></param>
+        /// <returns></returns>
+        public static async Task<KeyValuePair<bool, string>> SignQR(Student.LoginParams login, string name, Signer.SignCode sign)
         {
             if (login == null) throw new ArgumentNullException("login");
             if (sign == null) throw new ArgumentNullException("sign");
@@ -536,18 +639,22 @@ namespace ChaoXing
             });
             return await SignRoot(login, content, sign.aid);
         }
+        public static async Task<KeyValuePair<bool, string>> SignQR(Student.LoginParams login, string name, string sign)
+        {
+            return await SignQR(login, name, Signer.SignCode.Parse(sign));
+        }
         #endregion
+
         /// <summary>
-        /// 签到的根函数
+        /// 使用原始的cookie string进行签到
         /// </summary>
-        /// <param name="login"></param>
-        /// <param name="content">给服务器发送的参数</param>
+        /// <param name="cookie_string">cookie</param>
+        /// <param name="content"></param>
+        /// <param name="aid"></param>
         /// <returns></returns>
-        async public static Task<KeyValuePair<bool, string>> SignRoot(Student.LoginParams login, HttpContent content, string aid)
+        protected static async Task<KeyValuePair<bool, string>> SignRoot(string cookie_string, HttpContent content, string aid)
         {
             var client = new HttpClient();
-            var cookie_string = $"uf={login.uf}; _d={login._d}; UID={login._uid}; vc3={login.vc3};";
-
             // 20220914 debug found new interface
             // you must GET the presign url so that you can do anything else
             FormUrlEncodedContent pre_content = new FormUrlEncodedContent(new Dictionary<string, string> {
@@ -570,18 +677,24 @@ namespace ChaoXing
             }
             catch (Exception ex)
             {
+                Console.WriteLine("第一步签到发生错误！");
+                Console.WriteLine(ex.Message);
                 return new KeyValuePair<bool, string>(false, ex.Message);
             }
 
+            // 由于setcookie的存在，之前的client的cookie被覆写。所以我们暂时的解决方法是另写一个client.
+            var client2 = new HttpClient();
+            client.Dispose();
             var paramGet = await content.ReadAsStringAsync();
             var getUrl = CXURL.PPTSIGN + "?" + paramGet;
             Console.WriteLine(getUrl);
             var req = new HttpRequestMessage(HttpMethod.Get, getUrl);
             req.Headers.Add("Cookie", cookie_string);
-            req.Headers.Add("User-Agent", CXURL.UA);
+            req.Headers.Add("User-Agent", CXURL.PC_UA);
+            req.Version = new System.Version(1, 1);
             try
             {
-                var res = await client.SendAsync(req);
+                var res = await client2.SendAsync(req);
                 var resS = await res.Content.ReadAsStringAsync();
                 Console.WriteLine(resS);
                 if (resS.Contains("success")) return new KeyValuePair<bool, string>(true, resS);
@@ -591,6 +704,17 @@ namespace ChaoXing
             {
                 return new KeyValuePair<bool, string>(false, err.Message);
             }
+        }
+        /// <summary>
+        /// 签到的根函数
+        /// </summary>
+        /// <param name="login"></param>
+        /// <param name="content">给服务器发送的参数</param>
+        /// <returns></returns>
+        protected static async Task<KeyValuePair<bool, string>> SignRoot(Student.LoginParams login, HttpContent content, string aid)
+        {
+            var cookie_string = $"uf={login.uf}; _d={login._d}; UID={login._uid}; vc3={login.vc3}; _uid={login._uid}";
+            return await SignRoot(cookie_string, content, aid);
         }
     }
 }

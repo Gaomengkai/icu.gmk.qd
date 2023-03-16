@@ -12,14 +12,17 @@ using System.Text;
 using AndroidX.Fragment.App;
 
 using ChaoXing;
+using cx = ChaoXing;
 using Xamarin.Essentials;
 using System.Threading.Tasks;
+using static Java.Util.Jar.Attributes;
+//using Teachermate;
 
 namespace qd
 {
     public class Cxf : AndroidX.Fragment.App.Fragment
     {
-        private Student stu;
+        private cx.Student stu;
         private EditText eUsername;
         private EditText ePassword;
         private CheckBox cAutologin;
@@ -46,7 +49,7 @@ namespace qd
         {
             base.OnActivityCreated(savedInstanceState);
 
-            stu = new Student();
+            stu = new cx.Student();
 
             eUsername = View.FindViewById<EditText>(Resource.Id.cxTxtUserName);
             ePassword = View.FindViewById<EditText>(Resource.Id.cxTxtPassword);
@@ -69,11 +72,11 @@ namespace qd
             cxXcan.Click += CxXcan_Click;
 
             Spinner spinner = View.FindViewById<Spinner>(Resource.Id.spBuilding);
-            var adapter = ArrayAdapter.CreateFromResource(
-            this.Context, Resource.Array.building_array, Android.Resource.Layout.SimpleSpinnerItem);
+            var arr = cx.Signer.LocationDict.Keys.ToArray();
+            var adapter = ArrayAdapter.CreateFromResource(Context, Resource.Array.building_array, Android.Resource.Layout.SimpleSpinnerItem);
             adapter.SetDropDownViewResource(Android.Resource.Layout.SimpleSpinnerDropDownItem);
             spinner.Adapter = adapter;
-            spinner.ItemSelected += (sender, e) => { selectedBuilding=spinner.SelectedItem.ToString(); };
+            spinner.ItemSelected += (sender, e) => { selectedBuilding = spinner.SelectedItem.ToString(); Console.WriteLine(selectedBuilding); };
 
             // 创建用户文件
             await UserFile.ExistOrCreate();
@@ -134,41 +137,43 @@ namespace qd
                     course.signActives = await Signer.GetSignActives(stu.loginInfo, course.courseId, course.clazzId);
                     foreach (var signActive in course.signActives)
                     {
-                        if (signActive.status == 1)
+                        if (signActive.status == (int)ChaoXing.Signer.SignOpenType.OPEN)
                         {
-                            signStat.Text += $"检测到 {course.name} 有一个 {signActive.nameOne} 签到。\n";
+                            var pos = Signer.LocationDict[selectedBuilding];
+                            signStat.Text += $"检测到 '{course.name}' 有一个 '{signActive.nameOne}' 签到。\n";
 
-                            KeyValuePair<bool, string> signRes;
+                            KeyValuePair<bool, string> signRes = new KeyValuePair<bool, string>(false,"");
 
-                            // 目前仅仅支持手势签到和普通签到
-                            if (signActive.nameOne.Contains("手势") || signActive.nameOne == "签到")
+                            Console.WriteLine(signActive.nameFour);
+                            Console.WriteLine(signActive.nameOne);
+                            switch (signActive.GetSignActiveType())
                             {
-                                signRes = await 
-                                    Signer.Sign(stu.loginInfo, signActive.id.ToString(), stu.name);
-                            }
-
-                            // 位置签到支持
-                            else if (signActive.nameOne.Contains("位置"))
-                            {
-                                var pos = Signer.LocationDict[selectedBuilding];
-                                signRes = await
-                                    Signer.SignLoc(stu.loginInfo, signActive.id.ToString(), stu.name, pos);
-                                //signRes = await
-                                //    Signer.Sign(stu.loginInfo, signActive.id.ToString(), stu.name, 0, 0, null);
-                            }
-                            else
-                            {
-                                signStat.Text += $"----{signActive.nameOne} 暂时不支持。你已经死了。\n";
-                                continue;
+                                // Sign Type?
+                                // Here I use a switch to do.
+                                case cx.Signer.SignActiveType.COMMON:
+                                    System.Console.WriteLine("= Common");
+                                    signStat.Text += $"姓名：{stu.name}";
+                                    signRes = await cx.Signer.SignCommon(stu.loginInfo, signActive.id.ToString(), stu.name);
+                                    break;
+                                case cx.Signer.SignActiveType.LOCSIGN:
+                                    System.Console.WriteLine("= LocSign");
+                                    signRes = await cx.Signer.SignLoc(stu.loginInfo, signActive.id.ToString(), stu.name, Utils.RandomizePosition(pos));
+                                    break;
+                                case cx.Signer.SignActiveType.QRSIGN:
+                                    System.Console.WriteLine("= QRSign. 请使用qr签到:");
+                                    // read qr code
+                                    //var qr = System.Console.ReadLine();
+                                    //signRes=await cx.Signer.SignQR(stu.loginInfo, stu.name, qr);
+                                    break;
                             }
                             // 签到结果的显示操作
                             switch (signRes.Key)
                             {
                                 case true:
-                                    signStat.Text += $"----{course.name} 的 {signActive.nameOne}->签到成功。\n";
+                                    signStat.Text += $"----{course.name} 的 '{signActive.nameOne}'->成功。\n";
                                     break;
                                 case false:
-                                    signStat.Text += $"----{course.name} 的 {signActive.nameOne}->签到失败。:{signRes.Value}\n";
+                                    signStat.Text += $"----{course.name} 的 '{signActive.nameOne}'->失败。:{signRes.Value}\n";
                                     break;
                             }
                             
@@ -198,7 +203,7 @@ namespace qd
             try
             {
                 var name = await stu.GetAccountName();
-                var res = await Signer.Sign(login, code, name);
+                var res = await Signer.SignQR(login, name,code);
                 if (res.Key)
                 {
                     // Success to Sign.
